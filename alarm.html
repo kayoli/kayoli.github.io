@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberClock - Gelişmiş Saat Uygulaması</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #08080c;
+            --bg-secondary: #0d0d14;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --cyan: #00f5ff;
+            --purple: #bf5af2;
+            --cyan-glow: rgba(0, 245, 255, 0.5);
+            --purple-glow: rgba(191, 90, 242, 0.5);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --danger: #ff453a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(0, 245, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(191, 90, 242, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(191, 90, 242, 0.03) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        header h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px var(--cyan-glow);
+            letter-spacing: 4px;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding: 14px 28px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-secondary);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .tab-btn:hover {
+            border-color: var(--cyan);
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            border-color: var(--cyan);
+            color: var(--text-primary);
+            box-shadow: 0 0 20px var(--cyan-glow), inset 0 0 20px rgba(0, 245, 255, 0.1);
+        }
+
+        .tab-btn.active::before {
+            opacity: 0.15;
+        }
+
+        .content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        #world-clock .clock-display {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        #world-clock .time {
+            font-family: 'Orbitron', monospace;
+            font-size: 6rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 60px var(--cyan-glow);
+            letter-spacing: 8px;
+            line-height: 1;
+        }
+
+        #world-clock .time-small {
+            font-size: 3rem;
+            letter-spacing: 4px;
+        }
+
+        #world-clock .date {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+        }
+
+        #world-clock .day-name {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            color: var(--cyan);
+            margin-top: 10px;
+            letter-spacing: 3px;
+        }
+
+        .alarm-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .time-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px 25px;
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .time-input-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .time-input-wrapper label {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .time-click-input {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            width: 80px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            color: var(--cyan);
+            outline: none;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .time-click-input:hover {
+            background: rgba(0, 245, 255, 0.1);
+        }
+
+        .time-click-input::-webkit-inner-spin-button,
+        .time-click-input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+        }
+
+        .time-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px;
+            z-index: 100;
+            display: none;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .time-dropdown.active {
+            display: block;
+        }
+
+        .time-dropdown::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .time-dropdown::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .time-dropdown::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 3px;
+        }
+
+        .time-option {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            padding: 8px 15px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+        }
+
+        .time-option:hover {
+            background: rgba(0, 245, 255, 0.2);
+            color: var(--text-primary);
+        }
+
+        .time-option.selected {
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            color: var(--bg-primary);
+        }
+
+        .time-separator {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--purple);
+            animation: blink 1s infinite;
+            margin-top: 18px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .days-selector {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .day-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .day-btn:hover {
+            border-color: var(--cyan);
+            color: var(--text-primary);
+        }
+
+        .day-btn.active {
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            border-color: transparent;
+            color: var(--bg-primary);
+            box-shadow: 0 0 20px var(--cyan-glow);
+        }
+
+        .alarm-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding: 14px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            color: var(--bg-primary);
+            box-shadow: 0 4px 20px var(--cyan-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px var(--cyan-glow);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--cyan);
+            color: var(--text-primary);
+        }
+
+        .sound-upload {
+            margin-top: 25px;
+            text-align: center;
+        }
+
+        .sound-upload label {
+            display: block;
+            padding: 20px;
+            border: 2px dashed var(--glass-border);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+        }
+
+        .sound-upload label:hover {
+            border-color: var(--cyan);
+            color: var(--text-primary);
+        }
+
+        .sound-upload input {
+            display: none;
+        }
+
+        .sound-name {
+            font-size: 0.85rem;
+            color: var(--cyan);
+            margin-top: 10px;
+        }
+
+        .alarms-list {
+            margin-top: 30px;
+        }
+
+        .alarms-list h3 {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .alarm-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            margin-bottom: 10px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .alarm-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .alarm-time {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .alarm-days {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .alarm-toggle {
+            position: relative;
+            width: 56px;
+            height: 30px;
+        }
+
+        .alarm-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .alarm-toggle .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .alarm-toggle .slider::before {
+            position: absolute;
+            content: '';
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .alarm-toggle input:checked + .slider {
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            box-shadow: 0 0 15px var(--cyan-glow);
+        }
+
+        .alarm-toggle input:checked + .slider::before {
+            transform: translateX(26px);
+            background: var(--bg-primary);
+        }
+
+        .alarm-delete {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            padding: 8px;
+            font-size: 1.2rem;
+            opacity: 0.6;
+            transition: all 0.3s ease;
+        }
+
+        .alarm-delete:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .stopwatch-display {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .stopwatch-time {
+            font-family: 'Orbitron', monospace;
+            font-size: 5rem;
+            font-weight: 900;
+            color: var(--text-primary);
+            letter-spacing: 4px;
+        }
+
+        .stopwatch-ms {
+            font-size: 2.5rem;
+            color: var(--purple);
+            display: inline;
+        }
+
+        .stopwatch-ms.hidden {
+            display: none;
+        }
+
+        .stopwatch-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .ms-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .ms-toggle span {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .timer-display {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .timer-editing {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .timer-input-group {
+            text-align: center;
+            position: relative;
+        }
+
+        .timer-input-group label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .timer-click-input {
+            font-family: 'Orbitron', monospace;
+            font-size: 3rem;
+            font-weight: 700;
+            width: 100px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--glass-border);
+            border-radius: 16px;
+            color: var(--cyan);
+            padding: 15px 10px;
+            outline: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .timer-click-input:hover {
+            border-color: var(--cyan);
+            box-shadow: 0 0 20px var(--cyan-glow);
+        }
+
+        .timer-separator {
+            font-family: 'Orbitron', monospace;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--purple);
+            margin-top: 22px;
+        }
+
+        .timer-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px;
+            z-index: 100;
+            display: none;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .timer-dropdown.active {
+            display: block;
+        }
+
+        .timer-dropdown::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .timer-dropdown::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .timer-dropdown::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 3px;
+        }
+
+        .timer-option {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            padding: 8px 15px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+        }
+
+        .timer-option:hover {
+            background: rgba(0, 245, 255, 0.2);
+            color: var(--text-primary);
+        }
+
+        .timer-option.selected {
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            color: var(--bg-primary);
+        }
+
+        .timer-countdown {
+            display: none;
+        }
+
+        .timer-countdown.active {
+            display: block;
+        }
+
+        .timer-countdown .time-left {
+            font-family: 'Orbitron', monospace;
+            font-size: 5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 4px;
+        }
+
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .timer-progress {
+            margin-top: 30px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .timer-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--cyan), var(--purple));
+            border-radius: 4px;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 10px var(--cyan-glow);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sound-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sound-option {
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sound-option:hover {
+            border-color: var(--cyan);
+        }
+
+        .sound-option.active {
+            border-color: var(--cyan);
+            background: rgba(0, 245, 255, 0.1);
+        }
+
+        .modal-close {
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .alert-pulse {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0;
+        }
+
+        .alert-pulse.active {
+            animation: pulseAlert 1s ease-in-out infinite;
+        }
+
+        @keyframes pulseAlert {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        .alert-pulse::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 100px var(--danger);
+        }
+
+        .alert-pulse.cyan::before {
+            box-shadow: inset 0 0 100px var(--cyan);
+        }
+
+        .alarm-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .alarm-overlay.active {
+            display: flex;
+            background: rgba(0, 0, 0, 0.7);
+            animation: screenGlitch 0.5s infinite;
+        }
+
+        @keyframes screenGlitch {
+            0%, 100% { background: rgba(0, 0, 0, 0.7); }
+            25% { background: rgba(0, 0, 0, 0.75); }
+            50% { background: rgba(0, 0, 0, 0.65); }
+            75% { background: rgba(0, 0, 0, 0.72); }
+        }
+
+        .alarm-overlay-text {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            text-align: center;
+            padding: 30px 50px;
+            border: 2px solid var(--cyan);
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 30px var(--cyan-glow), inset 0 0 30px rgba(0, 245, 255, 0.1);
+            animation: textPulse 1s infinite;
+        }
+
+        @keyframes textPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.02); }
+        }
+
+        .alarm-item {
+            transition: all 0.4s ease;
+        }
+
+        .alarm-item.sliding {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        footer span {
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @media (max-width: 768px) {
+            #world-clock .time {
+                font-size: 3.5rem;
+            }
+
+            #world-clock .time-small {
+                font-size: 2rem;
+            }
+
+            .stopwatch-time {
+                font-size: 3rem;
+            }
+
+            .stopwatch-ms {
+                font-size: 1.5rem;
+            }
+
+            .timer-click-input {
+                font-size: 2rem;
+                width: 70px;
+            }
+
+            .timer-separator {
+                font-size: 2rem;
+                margin-top: 18px;
+            }
+
+            .timer-countdown .time-left {
+                font-size: 3rem;
+            }
+
+            .tab-btn {
+                padding: 12px 20px;
+                font-size: 0.85rem;
+            }
+
+            header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="alert-pulse" id="alertPulse"></div>
+    <div class="alarm-overlay" id="alarmOverlay">
+        <div class="alarm-overlay-text">Kapatmak İçin Dokun</div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>CYBERCLOCK</h1>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="world-clock">Dünya Saati</button>
+            <button class="tab-btn" data-tab="alarm">Alarm</button>
+            <button class="tab-btn" data-tab="stopwatch">Kronometre</button>
+            <button class="tab-btn" data-tab="timer">Zamanlayıcı</button>
+        </nav>
+
+        <main>
+            <section id="world-clock" class="content active">
+                <div class="glass-card">
+                    <div class="clock-display">
+                        <div class="time" id="clockTime">00:00:00</div>
+                        <div class="date" id="clockDate">1 Ocak 2026</div>
+                        <div class="day-name" id="clockDay">PAZARTESİ</div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="alarm" class="content">
+                <div class="glass-card">
+                    <div class="alarm-controls">
+                        <div class="time-picker">
+                            <div class="time-input-wrapper">
+                                <label>Saat</label>
+                                <input type="text" class="time-click-input" id="alarmHour" value="08" readonly>
+                                <div class="time-dropdown" id="hourDropdown"></div>
+                            </div>
+                            <span class="time-separator">:</span>
+                            <div class="time-input-wrapper">
+                                <label>Dakika</label>
+                                <input type="text" class="time-click-input" id="alarmMinute" value="00" readonly>
+                                <div class="time-dropdown" id="minuteDropdown"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="days-selector" id="daysSelector">
+                        <button class="day-btn" data-day="0">Pz</button>
+                        <button class="day-btn" data-day="1">Pt</button>
+                        <button class="day-btn" data-day="2">Sa</button>
+                        <button class="day-btn" data-day="3">Ça</button>
+                        <button class="day-btn" data-day="4">Pe</button>
+                        <button class="day-btn" data-day="5">Cu</button>
+                        <button class="day-btn" data-day="6">Ct</button>
+                    </div>
+
+                    <div class="alarm-actions">
+                        <button class="btn btn-primary" id="addAlarm">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Alarm Kur
+                        </button>
+                        <button class="btn btn-secondary" id="soundBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                            </svg>
+                            Ses Seç
+                        </button>
+                    </div>
+
+                    <div class="sound-upload">
+                        <label for="soundFile">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 8px;">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <div>Özel alarm sesi yükle (.mp3, .wav)</div>
+                        </label>
+                        <input type="file" id="soundFile" accept=".mp3,.wav">
+                        <div class="sound-name" id="soundName">Varsayılan ses seçili</div>
+                    </div>
+
+                    <div class="alarms-list" id="alarmsList">
+                        <h3>Kayıtlı Alarmlar</h3>
+                        <div id="alarmsContainer"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="stopwatch" class="content">
+                <div class="glass-card">
+                    <div class="stopwatch-display">
+                        <div class="stopwatch-time" id="stopwatchTime">00:00</div>
+                        <span class="stopwatch-ms" id="stopwatchMs">.00</span>
+                    </div>
+
+                    <div class="ms-toggle">
+                        <span>Salise göster</span>
+                        <label class="alarm-toggle">
+                            <input type="checkbox" id="msToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="stopwatch-controls">
+                        <button class="btn btn-primary" id="swStart">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            Başlat
+                        </button>
+                        <button class="btn btn-secondary" id="swReset">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                            </svg>
+                            Sıfırla
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="timer" class="content">
+                <div class="glass-card">
+                    <div class="timer-display">
+                        <div class="timer-editing" id="timerEditing">
+                            <div class="timer-input-group">
+                                <label>Saat</label>
+                                <input type="text" class="timer-click-input" id="timerHours" value="00" readonly>
+                                <div class="timer-dropdown" id="timerHourDropdown"></div>
+                            </div>
+                            <span class="timer-separator">:</span>
+                            <div class="timer-input-group">
+                                <label>Dakika</label>
+                                <input type="text" class="timer-click-input" id="timerMinutes" value="05" readonly>
+                                <div class="timer-dropdown" id="timerMinDropdown"></div>
+                            </div>
+                            <span class="timer-separator">:</span>
+                            <div class="timer-input-group">
+                                <label>Saniye</label>
+                                <input type="text" class="timer-click-input" id="timerSeconds" value="00" readonly>
+                                <div class="timer-dropdown" id="timerSecDropdown"></div>
+                            </div>
+                        </div>
+
+                        <div class="timer-countdown" id="timerCountdown">
+                            <div class="time-left" id="timerTimeLeft">00:05:00</div>
+                        </div>
+                    </div>
+
+                    <div class="timer-progress">
+                        <div class="timer-progress-bar" id="timerProgressBar" style="width: 100%"></div>
+                    </div>
+
+                    <div class="timer-controls">
+                        <button class="btn btn-primary" id="timerStart">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            Başlat
+                        </button>
+                        <button class="btn btn-secondary" id="timerPause" style="display: none;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="6" y="4" width="4" height="16"></rect>
+                                <rect x="14" y="4" width="4" height="16"></rect>
+                            </svg>
+                            Duraklat
+                        </button>
+                        <button class="btn btn-secondary" id="timerReset">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                            </svg>
+                            Sıfırla
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p><span>CyberClock</span> ile zamanı yakalayın</p>
+        </footer>
+    </div>
+
+    <div class="modal-overlay" id="soundModal">
+        <div class="modal">
+            <h3>Alarm Sesi Seç</h3>
+            <div class="sound-options">
+                <div class="sound-option" data-sound="wav">
+                    <span>Alarm Sesi</span>
+                    <span style="color: var(--cyan);">alarm.wav</span>
+                </div>
+                <div class="sound-option" data-sound="digital">
+                    <span>Dijital</span>
+                    <span style="color: var(--cyan);">Beep sesi</span>
+                </div>
+                <div class="sound-option" data-sound="chime">
+                    <span>Çan</span>
+                    <span style="color: var(--cyan);">Yumuşak</span>
+                </div>
+            </div>
+            <button class="btn btn-secondary modal-close" id="closeSoundModal">Kapat</button>
+        </div>
+    </div>
+
+    <script>
+        const daysTr = ['PAZAR', 'PAZARTESİ', 'SALI', 'ÇARŞAMBA', 'PERŞEMBE', 'CUMA', 'CUMARTESİ'];
+        const daysShort = ['Pz', 'Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct'];
+
+        let selectedDays = [];
+        let alarms = JSON.parse(localStorage.getItem('alarms')) || [];
+        let selectedSound = localStorage.getItem('selectedSound') || 'wav';
+        let customSound = localStorage.getItem('customSound') || null;
+
+        let audioContext = null;
+        let alarmOscillator = null;
+        let alarmGain = null;
+        let isAlarmPlaying = false;
+        let alarmInterval = null;
+        let alarmAudio = null;
+
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playWavAlarm() {
+            stopAlarm();
+            initAudio();
+            
+            alarmAudio = new Audio('alarm.wav');
+            alarmAudio.loop = true;
+            alarmAudio.play().catch(e => {
+                playDigitalAlarm();
+            });
+            
+            isAlarmPlaying = true;
+            showAlertPulse();
+        }
+
+        function playDigitalAlarm() {
+            initAudio();
+            stopAlarm();
+            
+            alarmGain = audioContext.createGain();
+            alarmGain.connect(audioContext.destination);
+            alarmGain.gain.value = 0.4;
+
+            alarmOscillator = audioContext.createOscillator();
+            alarmOscillator.type = 'square';
+            alarmOscillator.frequency.value = 1000;
+            alarmOscillator.connect(alarmGain);
+            alarmOscillator.start();
+
+            let tick = 0;
+            alarmInterval = setInterval(() => {
+                if (alarmOscillator) {
+                    tick++;
+                    if (tick % 4 < 2) {
+                        alarmOscillator.frequency.value = 1000;
+                    } else {
+                        alarmOscillator.frequency.value = 800;
+                    }
+                }
+            }, 150);
+
+            isAlarmPlaying = true;
+            showAlertPulse();
+        }
+
+        function playChimeAlarm() {
+            initAudio();
+            stopAlarm();
+            
+            const playNote = (freq, startTime, duration) => {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                gain.gain.setValueAtTime(0.3, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            };
+
+            const now = audioContext.currentTime;
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            
+            notes.forEach((note, i) => {
+                playNote(note, now + i * 0.3, 0.5);
+            });
+
+            alarmInterval = setTimeout(() => {
+                if (isAlarmPlaying) playChimeAlarm();
+            }, 1500);
+
+            isAlarmPlaying = true;
+            showAlertPulse('cyan');
+        }
+
+        function stopAlarm() {
+            if (alarmOscillator) {
+                try {
+                    alarmOscillator.stop();
+                } catch(e) {}
+                alarmOscillator = null;
+            }
+            if (alarmInterval) {
+                clearTimeout(alarmInterval);
+                alarmInterval = null;
+            }
+            if (alarmGain) {
+                alarmGain.disconnect();
+                alarmGain = null;
+            }
+            if (alarmAudio) {
+                alarmAudio.pause();
+                alarmAudio = null;
+            }
+            isAlarmPlaying = false;
+            hideAlertPulse();
+        }
+
+        function showAlertPulse(color = 'red') {
+            const pulse = document.getElementById('alertPulse');
+            pulse.className = 'alert-pulse active';
+            if (color === 'cyan') {
+                pulse.classList.add('cyan');
+            }
+            document.getElementById('alarmOverlay').classList.add('active');
+        }
+
+        function hideAlertPulse() {
+            const pulse = document.getElementById('alertPulse');
+            pulse.className = 'alert-pulse';
+            document.getElementById('alarmOverlay').classList.remove('active');
+        }
+
+        function playAlarm() {
+            switch(selectedSound) {
+                case 'digital':
+                    playDigitalAlarm();
+                    break;
+                case 'chime':
+                    playChimeAlarm();
+                    break;
+                case 'wav':
+                default:
+                    playWavAlarm();
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            if (isAlarmPlaying && !e.target.closest('.modal-overlay')) {
+                stopAlarm();
+            }
+            
+            if (e.target.closest('#alarmOverlay')) {
+                stopAlarm();
+            }
+            
+            if (!e.target.closest('.time-input-wrapper') && !e.target.closest('.timer-input-group')) {
+                document.querySelectorAll('.time-dropdown.active, .timer-dropdown.active').forEach(d => {
+                    d.classList.remove('active');
+                });
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isAlarmPlaying) {
+                stopAlarm();
+            }
+        });
+
+        function generateHourOptions() {
+            const dropdown = document.getElementById('hourDropdown');
+            let html = '';
+            for (let i = 0; i < 24; i++) {
+                const val = String(i).padStart(2, '0');
+                const selected = val === document.getElementById('alarmHour').value ? 'selected' : '';
+                html += `<div class="time-option ${selected}" data-value="${val}">${val}</div>`;
+            }
+            dropdown.innerHTML = html;
+            
+            dropdown.querySelectorAll('.time-option').forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.getElementById('alarmHour').value = opt.dataset.value;
+                    dropdown.querySelectorAll('.time-option').forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    dropdown.classList.remove('active');
+                });
+            });
+        }
+
+        function generateMinuteOptions() {
+            const dropdown = document.getElementById('minuteDropdown');
+            let html = '';
+            for (let i = 0; i < 60; i++) {
+                const val = String(i).padStart(2, '0');
+                const selected = val === document.getElementById('alarmMinute').value ? 'selected' : '';
+                html += `<div class="time-option ${selected}" data-value="${val}">${val}</div>`;
+            }
+            dropdown.innerHTML = html;
+            
+            dropdown.querySelectorAll('.time-option').forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.getElementById('alarmMinute').value = opt.dataset.value;
+                    dropdown.querySelectorAll('.time-option').forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    dropdown.classList.remove('active');
+                });
+            });
+        }
+
+        function generateTimerHourOptions() {
+            const dropdown = document.getElementById('timerHourDropdown');
+            let html = '';
+            for (let i = 0; i <= 99; i++) {
+                const val = String(i).padStart(2, '0');
+                const selected = val === document.getElementById('timerHours').value ? 'selected' : '';
+                html += `<div class="timer-option ${selected}" data-value="${val}">${val}</div>`;
+            }
+            dropdown.innerHTML = html;
+            
+            dropdown.querySelectorAll('.timer-option').forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.getElementById('timerHours').value = opt.dataset.value;
+                    dropdown.querySelectorAll('.timer-option').forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    dropdown.classList.remove('active');
+                    updateTimerDisplayText();
+                });
+            });
+        }
+
+        function generateTimerMinOptions() {
+            const dropdown = document.getElementById('timerMinDropdown');
+            let html = '';
+            for (let i = 0; i < 60; i++) {
+                const val = String(i).padStart(2, '0');
+                const selected = val === document.getElementById('timerMinutes').value ? 'selected' : '';
+                html += `<div class="timer-option ${selected}" data-value="${val}">${val}</div>`;
+            }
+            dropdown.innerHTML = html;
+            
+            dropdown.querySelectorAll('.timer-option').forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.getElementById('timerMinutes').value = opt.dataset.value;
+                    dropdown.querySelectorAll('.timer-option').forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    dropdown.classList.remove('active');
+                    updateTimerDisplayText();
+                });
+            });
+        }
+
+        function generateTimerSecOptions() {
+            const dropdown = document.getElementById('timerSecDropdown');
+            let html = '';
+            for (let i = 0; i < 60; i++) {
+                const val = String(i).padStart(2, '0');
+                const selected = val === document.getElementById('timerSeconds').value ? 'selected' : '';
+                html += `<div class="timer-option ${selected}" data-value="${val}">${val}</div>`;
+            }
+            dropdown.innerHTML = html;
+            
+            dropdown.querySelectorAll('.timer-option').forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.getElementById('timerSeconds').value = opt.dataset.value;
+                    dropdown.querySelectorAll('.timer-option').forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    dropdown.classList.remove('active');
+                    updateTimerDisplayText();
+                });
+            });
+        }
+
+        function updateTimerDisplayText() {
+            const h = document.getElementById('timerHours').value;
+            const m = document.getElementById('timerMinutes').value;
+            const s = document.getElementById('timerSeconds').value;
+            document.getElementById('timerTimeLeft').textContent = `${h}:${m}:${s}`;
+        }
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.time-dropdown.active, .timer-dropdown.active').forEach(d => {
+                d.classList.remove('active');
+            });
+        }
+
+        document.getElementById('alarmHour').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('minuteDropdown').classList.remove('active');
+            document.getElementById('hourDropdown').classList.toggle('active');
+        });
+
+        document.getElementById('alarmMinute').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('hourDropdown').classList.remove('active');
+            document.getElementById('minuteDropdown').classList.toggle('active');
+        });
+
+        document.getElementById('timerHours').addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeAllDropdowns();
+            document.getElementById('timerHourDropdown').classList.toggle('active');
+        });
+
+        document.getElementById('timerMinutes').addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeAllDropdowns();
+            document.getElementById('timerMinDropdown').classList.toggle('active');
+        });
+
+        document.getElementById('timerSeconds').addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeAllDropdowns();
+            document.getElementById('timerSecDropdown').classList.toggle('active');
+        });
+
+        document.getElementById('alarmHour').addEventListener('wheel', (e) => {
+            e.preventDefault();
+            let val = parseInt(document.getElementById('alarmHour').value);
+            if (e.deltaY < 0) val = (val + 1) % 24;
+            else val = (val - 1 + 24) % 24;
+            document.getElementById('alarmHour').value = String(val).padStart(2, '0');
+            generateHourOptions();
+        });
+
+        document.getElementById('alarmMinute').addEventListener('wheel', (e) => {
+            e.preventDefault();
+            let val = parseInt(document.getElementById('alarmMinute').value);
+            if (e.deltaY < 0) val = (val + 1) % 60;
+            else val = (val - 1 + 60) % 60;
+            document.getElementById('alarmMinute').value = String(val).padStart(2, '0');
+            generateMinuteOptions();
+        });
+
+        document.getElementById('timerHours').addEventListener('wheel', (e) => {
+            e.preventDefault();
+            let val = parseInt(document.getElementById('timerHours').value);
+            if (e.deltaY < 0) val = (val + 1) % 100;
+            else val = (val - 1 + 100) % 100;
+            document.getElementById('timerHours').value = String(val).padStart(2, '0');
+            generateTimerHourOptions();
+            updateTimerDisplayText();
+        });
+
+        document.getElementById('timerMinutes').addEventListener('wheel', (e) => {
+            e.preventDefault();
+            let val = parseInt(document.getElementById('timerMinutes').value);
+            if (e.deltaY < 0) val = (val + 1) % 60;
+            else val = (val - 1 + 60) % 60;
+            document.getElementById('timerMinutes').value = String(val).padStart(2, '0');
+            generateTimerMinOptions();
+            updateTimerDisplayText();
+        });
+
+        document.getElementById('timerSeconds').addEventListener('wheel', (e) => {
+            e.preventDefault();
+            let val = parseInt(document.getElementById('timerSeconds').value);
+            if (e.deltaY < 0) val = (val + 1) % 60;
+            else val = (val - 1 + 60) % 60;
+            document.getElementById('timerSeconds').value = String(val).padStart(2, '0');
+            generateTimerSecOptions();
+            updateTimerDisplayText();
+        });
+
+        generateHourOptions();
+        generateMinuteOptions();
+        generateTimerHourOptions();
+        generateTimerMinOptions();
+        generateTimerSecOptions();
+
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById('clockTime').innerHTML = 
+                `<span class="time-small">${hours}:${minutes}</span>:<span class="time-ms">${seconds}</span>`;
+            
+            const day = daysTr[now.getDay()];
+            const date = now.getDate();
+            const month = now.toLocaleDateString('tr-TR', { month: 'long' });
+            const year = now.getFullYear();
+            
+            document.getElementById('clockDate').textContent = `${date} ${month} ${year}`;
+            document.getElementById('clockDay').textContent = day;
+
+            checkAlarms(now);
+        }
+
+        function checkAlarms(now) {
+            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            const currentDay = now.getDay();
+
+            alarms.forEach((alarm, index) => {
+                if (alarm.time === currentTime && alarm.days.includes(currentDay) && alarm.active && !alarm.triggered) {
+                    alarm.triggered = true;
+                    alarm.active = false;
+                    saveAlarms();
+                    playAlarm();
+                }
+            });
+        }
+
+        function getDaysDisplay(days) {
+            if (!days || days.length === 0) {
+                return 'Bugün';
+            }
+            
+            const sorted = [...days].sort((a, b) => a - b);
+            
+            const weekdays = [1, 2, 3, 4, 5];
+            const weekend = [0, 6];
+            
+            if (sorted.length === 7) {
+                return 'Her Gün';
+            }
+            
+            if (sorted.length === 5 && sorted.every(d => weekdays.includes(d))) {
+                return 'Hafta İçi';
+            }
+            
+            if (sorted.length === 2 && sorted[0] === 0 && sorted[1] === 6) {
+                return 'Hafta Sonu';
+            }
+            
+            return days.map(d => daysShort[d]).join(', ');
+        }
+
+        function renderAlarms() {
+            const container = document.getElementById('alarmsContainer');
+            
+            if (alarms.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Henüz alarm kurulmadı</p>';
+                return;
+            }
+
+            container.innerHTML = alarms.map((alarm, index) => {
+                const daysDisplay = getDaysDisplay(alarm.days);
+                return `
+                    <div class="alarm-item">
+                        <div class="alarm-info">
+                            <div class="alarm-time">${alarm.time}</div>
+                            <div class="alarm-days">${daysDisplay}</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label class="alarm-toggle">
+                                <input type="checkbox" ${alarm.active ? 'checked' : ''} onchange="toggleAlarm(${index})">
+                                <span class="slider"></span>
+                            </label>
+                            <button class="alarm-delete" onclick="deleteAlarm(${index})">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function saveAlarms() {
+            localStorage.setItem('alarms', JSON.stringify(alarms));
+            renderAlarms();
+        }
+
+        function toggleAlarm(index) {
+            alarms[index].active = !alarms[index].active;
+            alarms[index].triggered = false;
+            saveAlarms();
+        }
+
+        function deleteAlarm(index) {
+            const alarmItems = document.querySelectorAll('.alarm-item');
+            const targetItem = alarmItems[index];
+            
+            targetItem.classList.add('sliding');
+            
+            setTimeout(() => {
+                alarms.splice(index, 1);
+                saveAlarms();
+            }, 400);
+        }
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+                
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.day-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const day = parseInt(btn.dataset.day);
+                btn.classList.toggle('active');
+                
+                if (selectedDays.includes(day)) {
+                    selectedDays = selectedDays.filter(d => d !== day);
+                } else {
+                    selectedDays.push(day);
+                }
+            });
+        });
+
+        document.getElementById('addAlarm').addEventListener('click', () => {
+            const hour = document.getElementById('alarmHour').value;
+            const minute = document.getElementById('alarmMinute').value;
+
+            let daysToSet = [...selectedDays];
+            if (daysToSet.length === 0) {
+                const today = new Date().getDay();
+                daysToSet = [today];
+            }
+
+            const newAlarm = {
+                time: `${hour}:${minute}`,
+                days: daysToSet,
+                active: true,
+                triggered: false
+            };
+
+            alarms.push(newAlarm);
+            saveAlarms();
+            
+            selectedDays = [];
+            document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+        });
+
+        document.getElementById('soundModal').addEventListener('click', (e) => {
+            if (e.target.id === 'soundModal') {
+                document.getElementById('soundModal').classList.remove('active');
+            }
+        });
+
+        document.getElementById('soundBtn').addEventListener('click', () => {
+            document.getElementById('soundModal').classList.add('active');
+        });
+
+        document.getElementById('closeSoundModal').addEventListener('click', () => {
+            document.getElementById('soundModal').classList.remove('active');
+        });
+
+        document.querySelectorAll('.sound-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                document.querySelectorAll('.sound-option').forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                selectedSound = opt.dataset.sound;
+                localStorage.setItem('selectedSound', selectedSound);
+                const soundNames = { wav: 'alarm.wav', digital: 'Dijital', chime: 'Çan' };
+                document.getElementById('soundName').textContent = soundNames[selectedSound] + ' ses seçili';
+            });
+        });
+
+        document.getElementById('soundFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    customSound = event.target.result;
+                    localStorage.setItem('customSound', customSound);
+                    document.getElementById('soundName').textContent = file.name;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        const savedSoundOption = document.querySelector(`.sound-option[data-sound="${selectedSound}"]`);
+        if (savedSoundOption) {
+            savedSoundOption.classList.add('active');
+            const soundNames = { wav: 'alarm.wav', digital: 'Dijital', chime: 'Çan' };
+            document.getElementById('soundName').textContent = soundNames[selectedSound] + ' ses seçili';
+        }
+
+        let swRunning = false;
+        let swStartTime = 0;
+        let swElapsed = 0;
+        let swInterval = null;
+
+        function updateStopwatch() {
+            const elapsed = Date.now() - swStartTime + swElapsed;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            const ms = Math.floor((elapsed % 1000) / 10);
+
+            document.getElementById('stopwatchTime').textContent = 
+                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            const msToggle = document.getElementById('msToggle');
+            const msElement = document.getElementById('stopwatchMs');
+            
+            if (msToggle.checked) {
+                msElement.classList.remove('hidden');
+                msElement.textContent = `.${String(ms).padStart(2, '0')}`;
+            } else {
+                msElement.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('swStart').addEventListener('click', () => {
+            if (!swRunning) {
+                swRunning = true;
+                swStartTime = Date.now();
+                swInterval = setInterval(updateStopwatch, 10);
+                document.getElementById('swStart').innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="6" y="4" width="4" height="16"></rect>
+                        <rect x="14" y="4" width="4" height="16"></rect>
+                    </svg>
+                    Durdur
+                `;
+            } else {
+                swRunning = false;
+                swElapsed += Date.now() - swStartTime;
+                clearInterval(swInterval);
+                document.getElementById('swStart').innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    Başlat
+                `;
+            }
+        });
+
+        document.getElementById('swReset').addEventListener('click', () => {
+            swRunning = false;
+            swElapsed = 0;
+            swStartTime = 0;
+            clearInterval(swInterval);
+            document.getElementById('stopwatchTime').textContent = '00:00';
+            document.getElementById('stopwatchMs').textContent = '.00';
+            document.getElementById('stopwatchMs').classList.remove('hidden');
+            document.getElementById('swStart').innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Başlat
+            `;
+        });
+
+        document.getElementById('msToggle').addEventListener('change', () => {
+            updateStopwatch();
+        });
+
+        let timerRunning = false;
+        let timerPaused = false;
+        let timerTotal = 0;
+        let timerRemaining = 0;
+        let timerInterval = null;
+
+        function updateTimerDisplay() {
+            const totalSeconds = Math.ceil(timerRemaining / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            document.getElementById('timerTimeLeft').textContent = 
+                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            const progress = (timerRemaining / timerTotal) * 100;
+            document.getElementById('timerProgressBar').style.width = `${progress}%`;
+        }
+
+        document.getElementById('timerStart').addEventListener('click', () => {
+            if (!timerRunning) {
+                timerRunning = true;
+                timerPaused = false;
+                
+                const hours = parseInt(document.getElementById('timerHours').value) || 0;
+                const mins = parseInt(document.getElementById('timerMinutes').value) || 0;
+                const secs = parseInt(document.getElementById('timerSeconds').value) || 0;
+                timerTotal = (hours * 3600 + mins * 60 + secs) * 1000;
+                timerRemaining = timerTotal;
+
+                document.getElementById('timerEditing').style.display = 'none';
+                document.getElementById('timerCountdown').classList.add('active');
+                document.getElementById('timerStart').style.display = 'none';
+                document.getElementById('timerPause').style.display = 'inline-flex';
+
+                timerInterval = setInterval(() => {
+                    timerRemaining -= 100;
+                    updateTimerDisplay();
+
+                    if (timerRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        timerRunning = false;
+                        playAlarm();
+                        document.getElementById('timerPause').style.display = 'none';
+                        document.getElementById('timerStart').style.display = 'inline-flex';
+                    }
+                }, 100);
+            }
+        });
+
+        document.getElementById('timerPause').addEventListener('click', () => {
+            if (timerRunning && !timerPaused) {
+                timerPaused = true;
+                clearInterval(timerInterval);
+                document.getElementById('timerPause').innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    Devam
+                `;
+            } else if (timerPaused) {
+                timerPaused = false;
+                timerInterval = setInterval(() => {
+                    timerRemaining -= 100;
+                    updateTimerDisplay();
+
+                    if (timerRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        timerRunning = false;
+                        playAlarm();
+                    }
+                }, 100);
+                document.getElementById('timerPause').innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="6" y="4" width="4" height="16"></rect>
+                        <rect x="14" y="4" width="4" height="16"></rect>
+                    </svg>
+                    Duraklat
+                `;
+            }
+        });
+
+        document.getElementById('timerReset').addEventListener('click', () => {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            timerPaused = false;
+            timerTotal = 0;
+            timerRemaining = 0;
+
+            document.getElementById('timerEditing').style.display = 'flex';
+            document.getElementById('timerCountdown').classList.remove('active');
+            document.getElementById('timerStart').style.display = 'inline-flex';
+            document.getElementById('timerPause').style.display = 'none';
+            document.getElementById('timerPause').innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
+                Duraklat
+            `;
+            document.getElementById('timerProgressBar').style.width = '100%';
+            hideAlertPulse();
+        });
+
+        setInterval(updateClock, 100);
+        updateClock();
+        renderAlarms();
+    </script>
+</body>
+</html>
